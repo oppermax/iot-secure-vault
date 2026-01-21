@@ -136,44 +136,6 @@ class VaultServer:
         
         return True, m4
     
-    def send_encrypted(self, session_id: bytes, message: bytes) -> bytes:
-        """Encrypt a message with the session key.
-        
-        Args:
-            session_id: Session identifier
-            message: Plaintext message
-            
-        Returns:
-            Encrypted message
-        """
-        if session_id not in self.sessions:
-            raise RuntimeError(f"Unknown session: {bytes_to_hex(session_id)}")
-        
-        session_key = self.sessions[session_id]['session_key']
-        if not session_key:
-            raise RuntimeError("No session key established. Complete handshake first.")
-        
-        return encrypt(message, session_key)
-    
-    def receive_encrypted(self, session_id: bytes, ciphertext: bytes) -> bytes:
-        """Decrypt a message with the session key.
-        
-        Args:
-            session_id: Session identifier
-            ciphertext: Encrypted message
-            
-        Returns:
-            Decrypted message
-        """
-        if session_id not in self.sessions:
-            raise RuntimeError(f"Unknown session: {bytes_to_hex(session_id)}")
-        
-        session_key = self.sessions[session_id]['session_key']
-        if not session_key:
-            raise RuntimeError("No session key established. Complete handshake first.")
-        
-        return decrypt(ciphertext, session_key)
-    
     def end_session(self, session_id: bytes):
         """End session and update vault for forward secrecy.
         
@@ -199,25 +161,4 @@ class VaultServer:
         
         # Remove session
         del self.sessions[session_id]
-    
-    def close_session(self, session_id: bytes):
-        """Close and remove a session WITHOUT updating vault.
-        
-        WARNING: This does NOT update the vault. Use end_session() instead
-        to properly end a session with vault update.
-        
-        Args:
-            session_id: Session identifier
-        """
-        if session_id in self.sessions:
-            del self.sessions[session_id]
-            print(f"[Server] Session closed: {bytes_to_hex(session_id)}")
-    
-    def get_active_sessions(self) -> List[bytes]:
-        """Get list of active session IDs.
-        
-        Returns:
-            List of session IDs
-        """
-        return list(self.sessions.keys())
 

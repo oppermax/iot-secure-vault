@@ -1,7 +1,6 @@
 """
 IoT Device (Client) implementation for the Secure Vault protocol.
 """
-import logging
 from typing import List, Optional
 from .utils import (
     NONCE_SIZE, random_nonce, xor_bytes, encrypt, decrypt, 
@@ -133,34 +132,6 @@ class IoTDevice:
         # print(f"  Session key: {bytes_to_hex(self.session_key)}")
         
         return True
-    
-    def send_encrypted(self, message: bytes) -> bytes:
-        """Encrypt a message with the session key.
-        
-        Args:
-            message: Plaintext message
-            
-        Returns:
-            Encrypted message
-        """
-        if not self.session_key:
-            raise RuntimeError("No session key established. Complete handshake first.")
-        
-        return encrypt(message, self.session_key)
-    
-    def receive_encrypted(self, ciphertext: bytes) -> bytes:
-        """Decrypt a message with the session key.
-        
-        Args:
-            ciphertext: Encrypted message
-            
-        Returns:
-            Decrypted message
-        """
-        if not self.session_key:
-            raise RuntimeError("No session key established. Complete handshake first.")
-        
-        return decrypt(ciphertext, self.session_key)
     
     def end_session(self):
         """End session and update vault for forward secrecy.

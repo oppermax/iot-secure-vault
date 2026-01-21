@@ -30,13 +30,17 @@ def xor_bytes(a: bytes, b: bytes) -> bytes:
 def encrypt(message: bytes, key: bytes, nonce: bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_GCM, nonce)
 
-    return cipher.encrypt(message)
+    ciphertext, tag = cipher.encrypt_and_digest(message)
+    
+    return ciphertext + tag
 
 
 def decrypt(ciphertext: bytes, key: bytes, nonce: bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_GCM, nonce)
+    tag = ciphertext[-16:]
+    actual_ciphertext = ciphertext[:-16]
 
-    return cipher.decrypt(ciphertext)
+    return cipher.decrypt_and_verify(actual_ciphertext, tag)
 
 
 def concatenate(*args: bytes) -> bytes:

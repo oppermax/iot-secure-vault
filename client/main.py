@@ -1,3 +1,5 @@
+import time
+
 import requests
 from vault import vault
 from vault import IoTDevice
@@ -52,6 +54,8 @@ def main():
     except Exception as e:
         print(f"Unexpected error: {e}")
 
+    time.sleep(1)
+
     m2 = bytes.fromhex(resp.json().get('payload'))
     print(f"Received Message M2: {m2.hex()}")
     m3 = device.respond_to_challenge(m2)
@@ -68,7 +72,7 @@ def main():
     except Exception as e:
         print(f"Unexpected error: {e}")
 
-    print(resp.json())
+    time.sleep(1)
     m4 = bytes.fromhex(resp.json().get('payload'))
     verified = device.verify_server(m4)
 

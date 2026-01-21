@@ -83,8 +83,8 @@ class IoTDevice:
         # Create payload: r1 || t1 || C2 || r2
         payload = concatenate(r1, self._t_1, self._c_2, self._r_2)
         
-        # Encrypt with k_1
-        m3 = encrypt(payload, self._k_1)
+        # Encrypt with k_1 and r1 as nonce
+        m3 = encrypt(payload, self._k_1, r1)
         
         print(f"[Device] Step 3: Responding to challenge")
         print(f"  Derived k_1: {bytes_to_hex(self._k_1)}")
@@ -114,7 +114,7 @@ class IoTDevice:
         decryption_key = xor_bytes(self._k_2, self._t_1)
         
         # Decrypt M_4
-        decrypted = decrypt(m4, decryption_key)
+        decrypted = decrypt(m4, decryption_key, self._r_2)
         
         # Parse: r2 || t2
         r2_received = decrypted[:NONCE_SIZE]

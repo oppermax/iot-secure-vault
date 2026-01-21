@@ -86,7 +86,7 @@ class VaultServer:
         
         # Decrypt M_3
         try:
-            decrypted = decrypt(m3, k_1)
+            decrypted = decrypt(m3, k_1, r1)
         except Exception as e:
             print(f"[Server] ✗ Decryption failed: {e}")
             return False, None
@@ -122,7 +122,7 @@ class VaultServer:
         payload = concatenate(r_2, t_2)
         
         # Encrypt with k_2 ⊕ t_1
-        m4 = encrypt(payload, encryption_key)
+        m4 = encrypt(payload, encryption_key, r_2)
         
         # Calculate session key: t_1 ⊕ t_2
         session_key = xor_bytes(t_1, t_2)

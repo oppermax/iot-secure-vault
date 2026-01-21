@@ -31,7 +31,7 @@ def encrypt(message: bytes, key: bytes, nonce: bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_GCM, nonce)
 
     ciphertext, tag = cipher.encrypt_and_digest(message)
-    
+
     return ciphertext + tag
 
 

@@ -1,8 +1,8 @@
 """
 IoT Secure Vault - Package initialization.
 """
-from .client import IoTDevice
-from .server import VaultServer
+from .device import IoTDevice
+from .vault_server import VaultServer
 from .vault import update_vault
 from .utils import KEY_LENGTH, bytes_to_hex
 

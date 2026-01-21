@@ -1,9 +1,9 @@
 import time
 
 import requests
-from vault import vault
-from vault import IoTDevice
-from vault.utils import SERVER_IP, SERVER_PORT, encrypt, nonce_from_counter
+from secure_vault import vault
+from secure_vault import IoTDevice
+from secure_vault.utils import SERVER_IP, SERVER_PORT, encrypt, nonce_from_counter
 
 
 def handle_response(resp: requests.Response):

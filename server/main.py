@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 
-from vault import VaultServer, vault
-from vault.utils import NONCE_SIZE, CHALLENGE_SIZE, decrypt, nonce_from_counter
+from secure_vault import VaultServer, vault
+from secure_vault.utils import NONCE_SIZE, CHALLENGE_SIZE, decrypt, nonce_from_counter
 
 app = Flask(__name__)
 

@@ -7,7 +7,7 @@ from .utils import (
     concatenate, bytes_to_hex
 )
 from .vault import (
-    create_challenge, split_key_ids, xor_vault_keys, update_vault, Vault
+    create_challenge, split_key_ids, xor_vault_keys, update_vault, Vault, new_from_file
 )
 
 
@@ -15,13 +15,14 @@ from .vault import (
 class VaultServer:
     """Server that authenticates IoT devices and manages secure sessions."""
     
-    def __init__(self, vault: Vault):
+    def __init__(self, vault_file_path: str):
         """Initialize Vault Server.
         
         Args:
             vault: List of pre-shared vault keys (each KEY_LENGTH bytes)
         """
-        self.vault = vault
+        self.vault = new_from_file(vault_file_path)
+        self.vault_file_path = vault_file_path
         
         # Active sessions: session_id -> session data
         self.sessions: Dict[bytes, dict] = {}
@@ -190,7 +191,7 @@ class VaultServer:
         print(f"[Server] Ending session {bytes_to_hex(session_id)} and updating vault")
         
         # Update vault using HMAC with session key
-        self.vault = update_vault(self.vault, session_key)
+        self.vault = update_vault(self.vault, session_key, self.vault_file_path)
         
         print(f"  ✓ Vault updated with {len(self.vault.keys)} new keys")
         

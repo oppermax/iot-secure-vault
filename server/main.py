@@ -6,7 +6,7 @@ from vault.utils import NONCE_SIZE, CHALLENGE_SIZE, decrypt
 app = Flask(__name__)
 
 
-app.vault_server = VaultServer(vault=vault.new_from_file('server/server_vault'))
+app.vault_server = VaultServer(vault_file_path='server/server_vault')
 
 @app.route('/handshake', methods=['POST'])
 def handshake():

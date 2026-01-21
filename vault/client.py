@@ -16,7 +16,7 @@ from .vault import (
 class IoTDevice:
     """IoT Device client that performs mutual authentication with a server."""
     
-    def __init__(self, device_id: int, vault: Vault):
+    def __init__(self, device_id: int, vault: Vault, vault_file_path: str):
         """Initialize IoT Device.
         
         Args:
@@ -25,6 +25,7 @@ class IoTDevice:
         """
         self.device_id = device_id
         self.vault = vault
+        self.vault_file_path = vault_file_path
         
         # Session state
         self.session_id: Optional[bytes] = None
@@ -174,7 +175,7 @@ class IoTDevice:
         
         # Update vault using HMAC with session key
         # TODO this should actually be the session data whatever that even means
-        self.vault = update_vault(self.vault, self.session_key)
+        self.vault = update_vault(self.vault, self.session_key, self.vault_file_path)
         
         print(f"  ✓ Vault updated with {len(self.vault.keys)} new keys")
         

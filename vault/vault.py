@@ -1,6 +1,7 @@
 """
 Vault-specific functions for challenge-response and vault updates.
 """
+import struct
 import secrets
 import hmac
 import hashlib
@@ -81,7 +82,7 @@ def xor_vault_keys(vault_keys: List[bytes]) -> bytes:
     return bytes(result)
 
 
-def update_vault(current_vault: Vault, session_key: bytes) -> Vault:
+def update_vault(current_vault: Vault, session_key: bytes, vault_file_path: str) -> Vault:
     """Update vault keys using HMAC with session key.
     
     This provides forward secrecy - even if the session key is compromised,
@@ -128,4 +129,12 @@ def update_vault(current_vault: Vault, session_key: bytes) -> Vault:
         end = start + KEY_LENGTH
         new_keys.append(bytes(new_vault_data[start:end]))
     
-    return Vault(keys=new_keys)
+    return save_vault(Vault(keys=new_keys), vault_file_path)
+
+
+# Write vault file
+def save_vault(vault: Vault, filename: str) -> Vault:
+    with open(filename, 'wb') as f:
+        for key in vault.keys:
+            f.write(key)
+    return vault

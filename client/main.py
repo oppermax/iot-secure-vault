@@ -24,7 +24,7 @@ def main():
 
     vault_obj = vault.new_from_file("client/client_vault")
 
-    device = IoTDevice(device_id=161, vault=vault_obj)
+    device = IoTDevice(device_id=161, vault=vault_obj, vault_file_path="client/client_vault")
 
     client = requests.session()
     resp = None # initialize so that it definitely exists in the try blocks
@@ -107,13 +107,6 @@ def main():
             print(f"Request failed: {e}")
         except Exception as e:
             print(f"Unexpected error: {e}")
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":

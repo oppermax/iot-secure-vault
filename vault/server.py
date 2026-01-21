@@ -23,6 +23,8 @@ class VaultServer:
         """
         self.vault = new_from_file(vault_file_path)
         self.vault_file_path = vault_file_path
+
+        self.data_counter = 0
         
         # Active sessions: session_id -> session data
         self.sessions: Dict[bytes, dict] = {}

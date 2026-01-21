@@ -10,6 +10,10 @@ KEY_LENGTH = 16  # bytes
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 7000
 
+def nonce_from_counter(counter: int) -> bytes:
+    """Generate a nonce from a counter value."""
+    return counter.to_bytes(NONCE_SIZE, 'big')
+
 def random_nonce() -> bytes:
     """Generate a cryptographically secure random nonce."""
     return secrets.token_bytes(NONCE_SIZE)

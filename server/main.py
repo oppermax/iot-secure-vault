@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 
 from vault import VaultServer, vault
-from vault.utils import NONCE_SIZE, CHALLENGE_SIZE, decrypt
+from vault.utils import NONCE_SIZE, CHALLENGE_SIZE, decrypt, nonce_from_counter
 
 app = Flask(__name__)
 
@@ -65,10 +65,12 @@ def data():
     if session_key is None:
         return jsonify({'error': 'session not authenticated'}), 400
 
-    decrypted_payload = decrypt(encrypted_payload, session_key)
+    decrypted_payload = decrypt(encrypted_payload, session_key, nonce_from_counter(app.vault_server.data_counter))
 
     if decrypted_payload is None:
         return jsonify({'error': 'Decryption failed'}), 400
+
+    app.vault_server.data_counter += 1
 
     print(f"Received data from device {device_id}:\n{decrypted_payload.decode('utf-8', errors='ignore')}")
 

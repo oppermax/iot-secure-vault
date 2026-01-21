@@ -3,7 +3,7 @@ import time
 import requests
 from vault import vault
 from vault import IoTDevice
-from vault.utils import SERVER_IP, SERVER_PORT, encrypt
+from vault.utils import SERVER_IP, SERVER_PORT, encrypt, nonce_from_counter
 
 
 def handle_response(resp: requests.Response):
@@ -83,6 +83,8 @@ def main():
 
     # Authenticated
 
+    counter = 0
+
     while True:
         print("ready to transmit data. type 'exit' to quit.")
         user_input = input().lower()
@@ -101,12 +103,13 @@ def main():
         try:
             user_input = user_input.encode("utf-8")
             payload = {
-                'payload' : encrypt(user_input, device.session_key).hex(),
+                'payload' : encrypt(user_input, device.session_key, nonce_from_counter(counter)).hex(),
                 'session_id' : device.session_id.hex(),
                 'device_id' : device.device_id
             }
             resp = client.post(f'{base_url}/data', json=payload, headers=headers, timeout=5)
             handle_response(resp)
+            counter += 1
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
         except Exception as e:

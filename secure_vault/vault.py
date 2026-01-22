@@ -134,6 +134,7 @@ def update_vault(current_vault: Vault, session_key: bytes, vault_file_path: str)
 
 # Write vault file
 def save_vault(vault: Vault, filename: str) -> Vault:
+    print("Saving updated vault to", filename)
     with open(filename, 'wb') as f:
         for key in vault.keys:
             f.write(key)

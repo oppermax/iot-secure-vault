@@ -32,3 +32,7 @@ on successful completion of a session. If the client or server crashes during co
 
 Theoretically, the connection could be interrupted after the client sends the request end the session and before the server 
 receives it. In this case, the vaults would be out of sync.
+
+## Sources
+
+T. Shah and S. Venkatesan, "Authentication of IoT Device and IoT Server Using Secure Vaults," TrustCom/BigDataSE 2018, pp. 819–824. https://doi.org/10.1109/TrustCom/BigDataSE.2018.00117

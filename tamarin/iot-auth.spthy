@@ -50,8 +50,8 @@ rule Server_Challenge_Response:
     let 
     k1 = h(<v, c1>)                 // derive key 1 (same method as device)
     k2 = h(<v, c2>)                 // derive key 2 (same method as device)
-    t = h(t1, ~t2)                  // shared session key
-    in    
+    t = h(<t1, ~t2>)                // shared session key
+    in
     [ SessionS($did, sid, v, c1, r1),
       In(<'M3', senc(<r1, t1, c2, r2>, k1)>),
       Fr(~t2) ]                  // fresh random value t2
@@ -63,32 +63,33 @@ rule Server_Challenge_Response:
 rule Device_Finalize:
     let
     k2 = h(<v, c2>)                 // derive key (same method as server)
-    t = h(t1, t2)                   // shared session key
+    t = h(<t1, t2>)                 // shared session key
     in
     [ SessionD_updated($did, sid, v, t1, c2, r2),
       In(<'M4', senc(<r2, t2>, k2)>)]
     --[ DeviceCreateSession($did, sid, t) ]->
     [ SessionD_final($did, sid, v, t) ]
 
+// Optional: Model vault update after session (can cause state explosion)
+/*
 rule End_Session_for_Device:
     let
-    new_v = h(v, t)                   // HMAC on vault using the session key
+    new_v = h(<v, t>)                 // HMAC on vault using the session key
     in
-    [ SessionD_final($did, sid, v, t),
-    !VaultD($did, v) ]
+    [ SessionD_final($did, sid, v, t) ]
     --[ EndSessionD($did, sid, new_v) ]->
     [ Out(<'EndSessionD', $did, sid>),
       !VaultD($did, new_v) ]
 
 rule Update_Server_Vault:
     let
-    new_v = h(v, t)                   // HMAC on vault using the session key
-    in    
+    new_v = h(<v, t>)                 // HMAC on vault using the session key
+    in
     [ In(<'EndSessionD', $did, sid>),
-    SessionS_final($did, sid, v, t),
-    !VaultS($did, v) ]
+    SessionS_final($did, sid, v, t) ]
     --[ UpdateVaultS($did, sid, new_v) ]->
     [ !VaultS($did, new_v) ]
+*/
 
 // Needed for Lemmas
 rule Reveal_Vault:

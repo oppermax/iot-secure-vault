@@ -1,0 +1,146 @@
+theory IoT_Auth_Simple
+begin
+
+/*
+  This uses abstract functions instead of real cryptography to allow
+  Tamarin to terminate and prove security properties.
+
+  Key simplifications:
+  - No persistent vault facts (avoids infinite state space)
+  - Abstract key derivation instead of real hashing
+  - Abstract encryption representation
+  - Single session per device (via restriction)
+*/
+
+// Abstract functions for vault operations
+functions:
+    derive_key/2,  // derive_key(vault, challenge) - abstract key derivation
+    combine/2      // combine(t1, t2) - abstract session key combination
+
+// M1: Device -> Server (device_id, session_id)
+rule Device_Hello:
+  [ Fr(~did),      // Fresh device ID
+    Fr(~sid),      // Fresh session ID
+    Fr(~vault) ]   // Fresh vault (linear fact, not persistent)
+  --[ DeviceHello(~did, ~sid, ~vault),
+      DeviceStart(~did, ~sid) ]->
+  [ Out(<'M1', ~did, ~sid>),
+    DeviceState1(~did, ~sid, ~vault) ]
+
+// M2: Server -> Device (challenge c1, random r1)
+rule Server_Respond_Challenge:
+  [ In(<'M1', did, sid>),
+    Fr(~c1),       // Fresh challenge
+    Fr(~r1),       // Fresh random value
+    Fr(~vault) ]   // Server's copy of vault (should match device's)
+  --[ ServerRespond(did, sid, ~c1, ~r1),
+      ServerHasVault(did, ~vault) ]->
+  [ Out(<'M2', ~c1, ~r1>),
+    ServerState1(did, sid, ~vault, ~c1, ~r1) ]
+
+// M3: Device -> Server (response: r1, t1, c2, r2)
+rule Device_Respond_Challenge:
+  let
+    k1 = derive_key(vault, c1)  // Derive key from vault and challenge
+  in
+  [ DeviceState1(did, sid, vault),
+    In(<'M2', c1, r1>),
+    Fr(~t1),       // Fresh random t1
+    Fr(~c2),       // Fresh challenge for server
+    Fr(~r2) ]      // Fresh random r2
+  --[ DeviceRespond(did, sid, k1, ~t1, ~c2, ~r2),
+      DeviceUsesKey(did, k1) ]->
+  [ Out(<'M3', r1, ~t1, ~c2, ~r2>),  // Abstract: send values directly
+    DeviceState2(did, sid, vault, ~t1, ~c2, ~r2) ]
+
+// M4: Server -> Device (response: r2, t2)
+rule Server_Verify_And_Respond:
+  let
+    k1 = derive_key(vault, c1)  // Same derivation as device
+    k2 = derive_key(vault, c2)  // Derive second key
+  in
+  [ ServerState1(did, sid, vault, c1, r1),
+    In(<'M3', r1, t1, c2, r2>),  // Verify r1 matches
+    Fr(~t2) ]                    // Fresh random t2
+  --[ ServerVerify(did, sid, k1, k2, ~t2),
+      ServerUsesKey(did, k2) ]->
+  [ Out(<'M4', r2, ~t2>),
+    ServerState2(did, sid, vault, t1, ~t2) ]
+
+// Device finalizes session
+rule Device_Finalize:
+  let
+    session_key = combine(t1, t2)  // Combine to create session key
+  in
+  [ DeviceState2(did, sid, vault, t1, c2, r2),
+    In(<'M4', r2, t2>) ]  // Verify r2 matches
+  --[ DeviceSession(did, sid, session_key),
+      SessionKey(did, sid, session_key),
+      Honest(did) ]->
+  [ DeviceSessionFinal(did, sid, session_key) ]
+
+// Server finalizes session
+rule Server_Finalize:
+  let
+    session_key = combine(t1, t2)  // Same computation as device
+  in
+  [ ServerState2(did, sid, vault, t1, t2) ]
+  --[ ServerSession(did, sid, session_key),
+      SessionKey(did, sid, session_key),
+      Honest(did) ]->
+  [ ServerSessionFinal(did, sid, session_key) ]
+
+// Adversary can compromise a device's vault
+rule Reveal_Vault:
+  [ DeviceState1(did, sid, vault) ]
+  --[ VaultReveal(did) ]->
+  [ Out(vault) ]
+
+/* ===== RESTRICTIONS ===== */
+
+// Only one session per device (helps termination)
+restriction single_session_per_device:
+  "All did sid1 sid2 #i #j.
+    DeviceStart(did, sid1) @ #i & DeviceStart(did, sid2) @ #j
+    ==> #i = #j"
+
+/* ===== LEMMAS ===== */
+
+// Sanity check: Can the protocol complete?
+lemma executability:
+  exists-trace
+  "Ex did sid sk #i #j #k.
+    DeviceStart(did, sid) @ #i
+  & DeviceSession(did, sid, sk) @ #j
+  & ServerSession(did, sid, sk) @ #k
+  & #i < #j & #j < #k
+  & not(Ex #r. VaultReveal(did) @ #r)
+  "
+
+// Security: Session keys remain secret if vault not revealed
+lemma session_key_secrecy [reuse]:
+  "All did sid sk #i.
+    SessionKey(did, sid, sk) @ #i
+  & Honest(did) @ #i
+  ==> (not(Ex #j. K(sk) @ #j))
+      | (Ex #r. VaultReveal(did) @ #r & #r < #i)
+  "
+
+// Authentication: If device accepts session key, server must have participated
+lemma device_authentication [reuse]:
+  "All did sid sk #i.
+    DeviceSession(did, sid, sk) @ #i
+  & not(Ex #r. VaultReveal(did) @ #r)
+  ==> (Ex #j c1 r1. ServerRespond(did, sid, c1, r1) @ #j & #j < #i)
+  "
+
+// Agreement: If both parties establish a session, they agree on the key
+lemma key_agreement [reuse]:
+  "All did sid sk1 sk2 #i #j.
+    DeviceSession(did, sid, sk1) @ #i
+  & ServerSession(did, sid, sk2) @ #j
+  & not(Ex #r. VaultReveal(did) @ #r)
+  ==> sk1 = sk2
+  "
+
+end

@@ -4,3 +4,4 @@ __pycache__/
 *.so
 .Python
 .idea/
+.DS_Store

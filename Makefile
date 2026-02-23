@@ -6,7 +6,7 @@ CLIENT_VAULT = client/client_vault
 SERVER_VAULT = server/server_vault
 PYTHON = python3
 
-.PHONY: help init-vaults clean-vaults sync-vaults check-vault-health run-server run-client pdf clean-pdf test
+.PHONY: init-vaults clean-vaults sync-vaults check-vault-health run-server run-client
 
 init-vaults:
 	@dd if=/dev/urandom of=$(SERVER_VAULT) bs=$(VAULT_BYTES) count=1 2>/dev/null

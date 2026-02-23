@@ -1,5 +1,3 @@
-import time
-
 import requests
 from secure_vault import vault
 from secure_vault import IoTDevice
@@ -45,7 +43,7 @@ def main():
     try:
         payload = {
             'payload' : m1.hex(),
-            'session_id' : device.session_id.hex(),
+            'session_id' : device.session.session_id.hex(),
         }
         resp = client.post(f'{base_url}/handshake', json=payload, headers=headers, timeout=5)
         handle_response(resp)
@@ -61,7 +59,7 @@ def main():
     try:
         payload = {
             'payload' : m3.hex(),
-            'session_id' : device.session_id.hex()
+            'session_id' : device.session.session_id.hex()
         }
         resp = client.post(f'{base_url}/challenge', json=payload, headers=headers, timeout=5)
         handle_response(resp)
@@ -78,9 +76,7 @@ def main():
         return
     print("server verified successfully.")
 
-    # Authenticated
-
-    counter = 0
+    # authenticated
 
     while True:
         print("ready to transmit data. type 'exit' to quit.")
@@ -89,7 +85,7 @@ def main():
             print("exiting...")
             try:
                 client.post(f'{base_url}/end', json={
-                    'session_id' : device.session_id.hex(),
+                    'session_id' : device.session.session_id.hex(),
                     'device_id' : device.device_id
                 }, headers=headers, timeout=5)
             except requests.exceptions.RequestException as e:
@@ -99,14 +95,18 @@ def main():
 
         try:
             user_input = user_input.encode("utf-8")
+
+            # append data to session for vault update
+            device.append_data(user_input)
+
             payload = {
-                'payload' : encrypt(user_input, device.session_key, nonce_from_counter(counter)).hex(),
-                'session_id' : device.session_id.hex(),
+                'payload' : encrypt(user_input, device.session.session_key, nonce_from_counter(device.session.data_counter)).hex(),
+                'session_id' : device.session.session_id.hex(),
                 'device_id' : device.device_id
             }
             resp = client.post(f'{base_url}/data', json=payload, headers=headers, timeout=5)
             handle_response(resp)
-            counter += 1
+            device.session.data_counter += 1
         except requests.exceptions.RequestException as e:
             print(f"Request failed: {e}")
         except Exception as e:

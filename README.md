@@ -5,11 +5,15 @@ Mutual authentication protocol using synchronized secure vaults for key manageme
 ## Quick Start
 
 ```bash
-python -m server.main
+make init-vaults
 ```
 
 ```bash
-python -m client.main
+make run-server
+```
+
+```bash
+make run-client
 ```
 
 ## Key Concept

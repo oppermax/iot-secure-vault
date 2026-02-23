@@ -1,18 +1,21 @@
 """
 Utility functions for the IoT Secure Vault protocol.
 """
+
 import secrets
 from Crypto.Cipher import AES
 
-CHALLENGE_SIZE = 4 # number of key IDs in challenge
+CHALLENGE_SIZE = 4  # number of key IDs in challenge
 NONCE_SIZE = 16  # bytes
 KEY_LENGTH = 16  # bytes
-SERVER_IP = '127.0.0.1'
+SERVER_IP = "127.0.0.1"
 SERVER_PORT = 7000
+
 
 def nonce_from_counter(counter: int) -> bytes:
     """Generate a nonce from a counter value."""
-    return counter.to_bytes(NONCE_SIZE, 'big')
+    return counter.to_bytes(NONCE_SIZE, "big")
+
 
 def random_nonce() -> bytes:
     """Generate a cryptographically secure random nonce."""
@@ -45,7 +48,7 @@ def decrypt(ciphertext: bytes, key: bytes, nonce: bytes) -> bytes:
 
 def concatenate(*args: bytes) -> bytes:
     """Concatenate multiple byte strings."""
-    return b''.join(args)
+    return b"".join(args)
 
 
 def bytes_to_hex(data: bytes) -> str:

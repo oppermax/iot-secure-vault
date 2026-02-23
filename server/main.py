@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 
-from secure_vault import VaultServer, vault
-from secure_vault.utils import NONCE_SIZE, CHALLENGE_SIZE, decrypt, nonce_from_counter
+from secure_vault import VaultServer
+from secure_vault.utils import NONCE_SIZE, decrypt, nonce_from_counter
 
 app = Flask(__name__)
 
+CHALLENGE_SIZE = 5  # Number of keys in challenge
 
-app.vault_server = VaultServer(vault_file_path='server/server_vault')
+app.vault_server = VaultServer(vault_file_path='server/server_vault', challenge_size=CHALLENGE_SIZE)
 
 @app.route('/handshake', methods=['POST'])
 def handshake():
@@ -17,7 +18,7 @@ def handshake():
 
     device_id = int.from_bytes(device_id, 'big')
 
-    session_id, m2 = app.vault_server.handle_handshake(m1, CHALLENGE_SIZE)
+    session_id, m2 = app.vault_server.handle_handshake(m1)
 
     print(f"Handshake initiated by device: {device_id}")
     print(f"Session ID: {session_id}")
@@ -34,7 +35,8 @@ def challenge():
 
     session_id = bytes.fromhex(data.get('session_id'))
 
-    device_id = app.vault_server.sessions.get(session_id, {}).get('device_id', None)
+    session = app.vault_server.sessions.get(session_id)
+    device_id = session.device_id if session else None
 
     if device_id is None:
         return jsonify({'error': f'no device found for session id {session_id.hex()}'}), 400
@@ -54,23 +56,25 @@ def data():
     session_id = bytes.fromhex(data.get('session_id'))
     encrypted_payload = bytes.fromhex(data.get('payload'))
 
-    device_id = app.vault_server.sessions.get(session_id, {}).get('device_id', None)
+    session = app.vault_server.sessions.get(session_id)
+    device_id = session.device_id if session else None
 
     if device_id is None:
         return jsonify({'error': 'no session found. initialize handshake first'}), 400
 
-    session = app.vault_server.sessions[session_id]
-
-    session_key = session.get('session_key')
+    session_key = session.session_key
     if session_key is None:
         return jsonify({'error': 'session not authenticated'}), 400
 
-    decrypted_payload = decrypt(encrypted_payload, session_key, nonce_from_counter(app.vault_server.data_counter))
+    decrypted_payload = decrypt(encrypted_payload, session_key, nonce_from_counter(session.data_counter))
 
     if decrypted_payload is None:
         return jsonify({'error': 'Decryption failed'}), 400
 
-    app.vault_server.data_counter += 1
+    session.data_counter += 1
+
+    # append the decrypted data to session data for vault update
+    session.append_data(decrypted_payload)
 
     print(f"Received data from device {device_id}:\n{decrypted_payload.decode('utf-8', errors='ignore')}")
 
@@ -81,7 +85,8 @@ def end():
     data = request.get_json()
     session_id = bytes.fromhex(data.get('session_id'))
 
-    device_id = app.vault_server.sessions.get(session_id, {}).get('device_id', None)
+    session = app.vault_server.sessions.get(session_id)
+    device_id = session.device_id if session else None
 
     if device_id is None:
         return jsonify({'error': 'no session found. initialize handshake first'}), 400

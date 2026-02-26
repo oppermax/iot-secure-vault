@@ -92,20 +92,13 @@ class VaultServer:
             print(f"[Server] ✗ Decryption failed: {e}")
             return False, None
 
-        # parse the decrypted payload: r1 || t1 || C2 || r2
-        r1_received = decrypted[:NONCE_SIZE]
-        t_1 = decrypted[NONCE_SIZE : NONCE_SIZE * 2]
+        # parse the decrypted payload: t1 || C2 || r2
+        t_1 = decrypted[:NONCE_SIZE]
 
         # c2 is the rest except the last NONCE_SIZE bytes (which is r2)
-        c_2 = decrypted[NONCE_SIZE * 2 : -NONCE_SIZE]
+        c_2 = decrypted[NONCE_SIZE:-NONCE_SIZE]
         r_2 = decrypted[-NONCE_SIZE:]
 
-        # verify r1 matches what we sent
-        if r1_received != r1:
-            print("[Server] ✗ Client authentication failed: r1 mismatch")
-            print(f"  Expected: {bytes_to_hex(r1)}")
-            print(f"  Received: {bytes_to_hex(r1_received)}")
-            return False, None
 
         # derive k_2 from client's challenge C_2
         key_ids_2 = split_key_ids(c_2)
@@ -120,11 +113,9 @@ class VaultServer:
         # create encryption key: k_2 ⊕ t_1
         encryption_key = xor_bytes(k_2, t_1)
 
-        # create payload: r2 || t2
-        payload = concatenate(r_2, t_2)
 
-        # encrypt with k_2 ⊕ t_1
-        m4 = encrypt(payload, encryption_key, r_2)
+        # encrypt with k_2 ⊕ t_1 and r2 as nonce
+        m4 = encrypt(t_2, encryption_key, r_2)
 
         # calculate session key: t_1 ⊕ t_2
         session_key = xor_bytes(t_1, t_2)

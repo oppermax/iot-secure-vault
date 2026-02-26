@@ -82,8 +82,8 @@ class IoTDevice:
             num_keys=len(key_ids), vault_size=len(self.vault.keys)
         )
 
-        # create payload: r1 || t1 || C2 || r2
-        payload = concatenate(r1, self.session.t_1, self.session.c_2, self.session.r_2)
+        # create payload: t1 || C2 || r2
+        payload = concatenate(self.session.t_1, self.session.c_2, self.session.r_2)
 
         # encrypt with k_1 and r1 as nonce
         m3 = encrypt(payload, self.session.k_1, r1)
@@ -120,20 +120,13 @@ class IoTDevice:
         # decrypt M_4
         decrypted = decrypt(m4, decryption_key, self.session.r_2)
 
-        # parse: r2 || t2
-        r2_received = decrypted[:NONCE_SIZE]
-        t_2 = decrypted[NONCE_SIZE : NONCE_SIZE * 2]
-
-        # verify r2 matches what we sent
-        if r2_received != self.session.r_2:
-            print("[Device] ✗ Server authentication failed: r2 mismatch")
-            return False
+        # parse: t2
+        t_2 = decrypted[:NONCE_SIZE]
 
         # calculate session key: t_1 ⊕ t_2
         self.session.session_key = xor_bytes(self.session.t_1, t_2)
 
         print("[Device] Step 5: Server verified successfully")
-        print("  ✓ r2 verified")
         print(f"  Session key: {bytes_to_hex(self.session.session_key)}")
 
         return True

@@ -9,9 +9,9 @@ PYTHON = python3
 .PHONY: init-vaults clean-vaults sync-vaults check-vault-health run-server run-client
 
 init-vaults:
-	@dd if=/dev/urandom of=$(SERVER_VAULT) bs=$(VAULT_BYTES) count=1 2>/dev/null
+	@$(PYTHON) -c "import secrets; print('\n'.join(str(secrets.randbits($(KEY_LENGTH)*8)) for _ in range($(VAULT_SIZE))))" > $(SERVER_VAULT)
 	@cp $(SERVER_VAULT) $(CLIENT_VAULT)
-	@echo "Created vaults ($(VAULT_BYTES) bytes)"
+	@echo "Created vaults ($(VAULT_SIZE) keys)"
 
 sync-vaults:
 	@cp $(SERVER_VAULT) $(CLIENT_VAULT)

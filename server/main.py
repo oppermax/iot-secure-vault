@@ -11,6 +11,7 @@ app.vault_server = VaultServer(vault_file_path='server/server_vault', challenge_
 
 @app.route('/handshake', methods=['POST'])
 def handshake():
+    """Step 2: Handle handshake initiation from device and respond with challenge."""
     data = request.get_json()
     m1 = bytes.fromhex(data.get('payload'))
 
@@ -30,6 +31,7 @@ def handshake():
 
 @app.route('/challenge', methods=['POST'])
 def challenge():
+    """Step 4: Verify device's response to challenge and respond with server verification."""
     data = request.get_json()
     m3 = bytes.fromhex(data.get('payload'))
 
@@ -52,6 +54,7 @@ def challenge():
 
 @app.route('/data', methods=['POST'])
 def data():
+    """Handle incoming encrypted data from authenticated device."""
     data = request.get_json()
     session_id = bytes.fromhex(data.get('session_id'))
     encrypted_payload = bytes.fromhex(data.get('payload'))
@@ -82,6 +85,7 @@ def data():
 
 @app.route('/end', methods=['POST'])
 def end():
+    """Handle session termination and vault update."""
     data = request.get_json()
     session_id = bytes.fromhex(data.get('session_id'))
 

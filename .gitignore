@@ -5,3 +5,6 @@ __pycache__/
 .Python
 .idea/
 .DS_Store
+
+client/client_vault
+server/server_vault

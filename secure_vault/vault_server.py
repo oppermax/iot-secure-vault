@@ -137,8 +137,8 @@ class VaultServer:
         return True, m4
 
 
-    # end_session
     def end_session(self, session_id: bytes):
+        """End session and update vault with session data."""
         if session_id not in self.sessions:
             raise RuntimeError(f"Unknown session: {bytes_to_hex(session_id)}")
 

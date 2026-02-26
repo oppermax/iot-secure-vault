@@ -26,22 +26,18 @@ class Vault:
 
 
 def new_from_file(filepath: str) -> "Vault":
-    """Load vault keys from a binary file.
-
-    Each key is stored as KEY_LENGTH bytes.
+    """Load vault keys from a text file.
+    Each line contains one integer representing a vault key.
     """
-    with open(filepath, "rb") as f:
-        data = f.read()
-
-    if len(data) % KEY_LENGTH != 0:
-        raise ValueError("Vault file size must be a multiple of KEY_LENGTH")
-
-    num_keys = len(data) // KEY_LENGTH
     keys = []
-    for i in range(num_keys):
-        start = i * KEY_LENGTH
-        end = start + KEY_LENGTH
-        keys.append(data[start:end])
+    with open(filepath, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                # convert integer to bytes
+                key_int = int(line)
+                key_bytes = key_int.to_bytes(KEY_LENGTH, "big")
+                keys.append(key_bytes)
 
     vault = Vault(keys=keys)
     return vault
@@ -131,9 +127,11 @@ def update_vault(
 
 
 def save_vault(vault: Vault, filename: str) -> Vault:
-    """Save vault keys to a binary file."""
+    """Save vault keys as integers to a text file."""
     print("Saving updated vault to", filename)
-    with open(filename, "wb") as f:
+    with open(filename, "w") as f:
         for key in vault.keys:
-            f.write(key)
+            # convert bytes to integer
+            key_int = int.from_bytes(key, "big")
+            f.write(f"{key_int}\n")
     return vault
